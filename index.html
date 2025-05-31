@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockVision Pro - Advanced Stock Analysis Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #00cc66;
+            --accent-color: #ff6b35;
+            --dark-bg: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #b3b3b3;
+            --border-color: #333;
+            --success-color: #00ff88;
+            --danger-color: #ff4757;
+            --warning-color: #ffa502;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: radial-gradient(circle at center, rgba(0, 102, 204, 0.1) 0%, transparent 70%);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--text-light), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(0, 102, 204, 0.3);
+        }
+
+        .search-btn, .predict-btn, .analysis-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .search-btn:hover, .predict-btn:hover, .analysis-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 102, 204, 0.4);
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .main-panel {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .price-display {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-change {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .price-change.positive {
+            color: var(--success-color);
+        }
+
+        .price-change.negative {
+            color: var(--danger-color);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 2rem 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 1rem;
+        }
+
+        /* Chart Controls */
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover, .control-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Technical Indicators */
+        .indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .indicator-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .indicator-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .indicator-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Prediction Section */
+        .prediction-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .prediction-result {
+            background: rgba(0, 102, 204, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Drawing Tools */
+        .drawing-tools {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-btn:hover, .tool-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error Messages */
+        .error-message {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger-color);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--danger-color);
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--success-color);
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .side-panel {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            
+            .info-card {
+                min-width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                min-width: 100%;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .indicators {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i> StockVision Pro
+            </div>
+            <ul class="nav-links">
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#analysis">Analysis</a></li>
+                <li><a href="#predictions">Predictions</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero">
+                <h1>Advanced Stock Market Analysis</h1>
+                <p>Professional-grade tools for intelligent investment decisions</p>
+            </section>
+
+            <!-- Search Section -->
+            <section class="search-section">
+                <h2><i class="fas fa-search"></i> Stock Search & Analysis</h2>
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Enter stock symbol (e.g., AAPL, GOOGL, TSLA)" id="stockInput">
+                    <button class="search-btn" onclick="searchStock()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button class="analysis-btn" onclick="performAnalysis()">
+                        <i class="fas fa-chart-bar"></i> Analyze
+                    </button>
+                    <button class="predict-btn" onclick="predictStock()">
+                        <i class="fas fa-crystal-ball"></i> Predict
+                    </button>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing market data...</p>
+                </div>
+            </section>
+
+            <!-- Dashboard -->
+            <section class="dashboard" id="dashboard">
+                <div class="main-panel">
+                    <h2><i class="fas fa-chart-line"></i> Interactive Chart</h2>
+                    
+                    <!-- Chart Controls -->
+                    <div class="chart-controls">
+                        <button class="control-btn active" onclick="setTimeframe('1D')">1D</button>
+                        <button class="control-btn" onclick="setTimeframe('1W')">1W</button>
+                        <button class="control-btn" onclick="setTimeframe('1M')">1M</button>
+                        <button class="control-btn" onclick="setTimeframe('3M')">3M</button>
+                        <button class="control-btn" onclick="setTimeframe('1Y')">1Y</button>
+                    </div>
+
+                    <!-- Drawing Tools -->
+                    <div class="drawing-tools">
+                        <button class="tool-btn" onclick="activateTool('line')">
+                            <i class="fas fa-minus"></i> Line
+                        </button>
+                        <button class="tool-btn" onclick="activateTool('trend')">
+                            <i class="fas fa-chart-line"></i> Trend
+                        </button>
+                        <button class="tool-btn" onclick="activateTool('marker')">
+                            <i class="fas fa-map-pin"></i> Marker
+                        </button>
+                        <button class="tool-btn" onclick="clearDrawings()">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                        <button class="tool-btn" onclick="zoomChart()">
+                            <i class="fas fa-search-plus"></i> Zoom
+                        </button>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="side-panel">
+                    <!-- Stock Info -->
+                    <div class="info-card">
+                        <h3><i class="fas fa-info-circle"></i> Stock Information</h3>
+                        <div id="stockInfo">
+                            <div class="price-display" id="currentPrice">$0.00</div>
+                            <div class="price-change" id="priceChange">+0.00 (0.00%)</div>
+                            <p><strong>Symbol:</strong> <span id="stockSymbol">-</span></p>
+                            <p><strong>Volume:</strong> <span id="stockVolume">-</span></p>
+                            <p><strong>Market Cap:</strong> <span id="marketCap">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Technical Indicators -->
+                    <div class="info-card">
+                        <h3><i class="fas fa-calculator"></i> Technical Indicators</h3>
+                        <div id="technicalIndicators">
+                            <div class="indicator-item">
+                                <strong>RSI (14):</strong> <span id="rsiValue">-</span>
+                            </div>
+                            <div class="indicator-item">
+                                <strong>MACD:</strong> <span id="macdValue">-</span>
+                            </div>
+                            <div class="indicator-item">
+                                <strong>MA (20):</strong> <span id="ma20Value">-</span>
+                            </div>
+                            <div class="indicator-item">
+                                <strong>MA (50):</strong> <span id="ma50Value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prediction Section -->
+            <section class="prediction-section" id="predictions">
+                <h2><i class="fas fa-crystal-ball"></i> Price Prediction & Analysis</h2>
+                <div class="prediction-result" id="predictionResult" style="display: none;">
+                    <h3>Prediction Results</h3>
+                    <p><strong>Predicted Price (7 days):</strong> <span id="predictedPrice">$0.00</span></p>
+                    <p><strong>Confidence Level:</strong> <span id="confidenceLevel">0%</span></p>
+                    <p><strong>Trend Direction:</strong> <span id="trendDirection">Neutral</span></p>
+                    <p><strong>Recommendation:</strong> <span id="recommendation">Hold</span></p>
+                </div>
+            </section>
+
+            <!-- Technical Analysis -->
+            <section class="indicators">
+                <div class="indicator-card">
+                    <div class="indicator-value" id="sma20">$0.00</div>
+                    <div class="indicator-label">SMA (20)</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-value" id="sma50">$0.00</div>
+                    <div class="indicator-label">SMA (50)</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-value" id="rsi">0</div>
+                    <div class="indicator-label">RSI (14)</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-value" id="macd">0.00</div>
+                    <div class="indicator-label">MACD</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-value" id="volume">0</div>
+                    <div class="indicator-label">Volume</div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-value" id="volatility">0%</div>
+                    <div class="indicator-label">Volatility</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let stockChart;
+        let currentData = [];
+        let drawingMode = false;
+        let drawingTool = null;
+
+        // Sample stock data for demonstration
+        const sampleStocks = {
+            'AAPL': {
+                name: 'Apple Inc.',
+                price: 175.43,
+                change: 2.15,
+                changePercent: 1.24,
+                volume: '45,123,456',
+                marketCap: '$2.8T',
+                data: generateSampleData(150, 175)
+            },
+            'GOOGL': {
+                name: 'Alphabet Inc.',
+                price: 142.56,
+                change: -1.23,
+                changePercent: -0.85,
+                volume: '28,456,789',
+                marketCap: '$1.8T',
+                data: generateSampleData(130, 145)
+            },
+            'TSLA': {
+                name: 'Tesla, Inc.',
+                price: 248.78,
+                change: 5.67,
+                changePercent: 2.33,
+                volume: '67,891,234',
+                marketCap: '$790B',
+                data: generateSampleData(200, 250)
+            },
+            'MSFT': {
+                name: 'Microsoft Corporation',
+                price: 378.92,
+                change: 3.45,
+                changePercent: 0.92,
+                volume: '32,567,890',
+                marketCap: '$2.9T',
+                data: generateSampleData(350, 380)
+            },
+            'AMZN': {
+                name: 'Amazon.com Inc.',
+                price: 156.78,
+                change: -2.34,
+                changePercent: -1.47,
+                volume: '41,234,567',
+                marketCap: '$1.6T',
+                data: generateSampleData(140, 160)
+            }
+        };
+
+        // Generate sample stock data
+        function generateSampleData(minPrice, maxPrice) {
+            const data = [];
+            const days = 90;
+            let currentPrice = (minPrice + maxPrice) / 2;
+            
+            for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                
+                // Add some randomness to price movement
+                const change = (Math.random() - 0.5) * (maxPrice - minPrice) * 0.05;
+                currentPrice += change;
+                currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice));
+                
+                data.push({
+                    x: date,
+                    y: parseFloat(currentPrice.toFixed(2)),
+                    volume: Math.floor(Math.random() * 50000000) + 10000000
+                });
+            }
+            
+            return data;
+        }
+
+        // Initialize the application
+        function init() {
+            initChart();
+            
+            // Add enter key listener to search input
+            document.getElementById('stockInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchStock();
+                }
+            });
+
+            // Load default stock (AAPL)
+            setTimeout(() => {
+                document.getElementById('stockInput').value = 'AAPL';
+                searchStock();
+            }, 1000);
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Stock Price',
+                        data: [],
+                        borderColor: 'rgb(0, 102, 204)',
+                        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }, {
+                        label: 'SMA 20',
+                        data: [],
+                        borderColor: 'rgb(255, 107, 53)',
+                        backgroundColor: 'transparent',
+                        borderWidth: 1,
+                        borderDash: [5, 5]
+                    }, {
+                        label: 'SMA 50',
+                        data: [],
+                        borderColor: 'rgb(0, 204, 102)',
+                        backgroundColor: 'transparent',
+                        borderWidth: 1,
+                        borderDash: [10, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            },
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'white',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    }
+                }
+            });
+        }
+
+        // Search for stock
+        function searchStock() {
+            const symbol = document.getElementById('stockInput').value.toUpperCase().trim();
+            
+            if (!symbol) {
+                showError('Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(true);
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                if (sampleStocks[symbol]) {
+                    updateStockData(symbol, sampleStocks[symbol]);
+                    showSuccess(Stock data loaded for ${symbol});
+                } else {
+                    showError(Stock symbol "${symbol}" not found. Try: AAPL, GOOGL, TSLA, MSFT, AMZN);
+                }
+                showLoading(false);
+            }, 1500);
+        }
+
+        // Update stock data in UI
+        function updateStockData(symbol, data) {
+            currentData = data.data;
+            
+            // Update stock info
+            document.getElementById('stockSymbol').textContent = symbol;
+            document.getElementById('currentPrice').textContent = $${data.price.toFixed(2)};
+            
+            const changeElement = document.getElementById('priceChange');
+            const changeText = ${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)} (${data.changePercent.toFixed(2)}%);
+            changeElement.textContent = changeText;
+            changeElement.className = price-change ${data.change >= 0 ? 'positive' : 'negative'};
+            
+            document.getElementById('stockVolume').textContent = data.volume;
+            document.getElementById('marketCap').textContent = data.marketCap;
+            
+            // Update chart
+            updateChart(data.data);
+            
+            // Calculate and update technical indicators
+            updateTechnicalIndicators(data.data);
+            
+            // Add animation
+            document.getElementById('dashboard').classList.add('fade-in');
+        }
+
+        // Update chart with new data
+        function updateChart(data) {
+            const prices = data.map(d => ({ x: d.x, y: d.y }));
+            const sma20 = calculateSMA(data, 20);
+            const sma50 = calculateSMA(data, 50);
+            
+            stockChart.data.datasets[0].data = prices;
+            stockChart.data.datasets[1].data = sma20;
+            stockChart.data.datasets[2].data = sma50;
+            stockChart.update('active');
+        }
+
+        // Calculate Simple Moving Average
+        function calculateSMA(data, period) {
+            const sma = [];
+            for (let i = period - 1; i < data.length; i++) {
+                const sum = data.
